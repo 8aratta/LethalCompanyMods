@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/Flasks of Fortune and Folly
+/.vscode
+/Flasks of Fortune and Folly/obj
