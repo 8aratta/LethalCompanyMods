@@ -47,10 +47,12 @@ namespace FlaskOfFortuneAndFolly
 
         void Awake()
         {
+
+            // TODO: Move default settings to a separate method or class
             #region Flask Default Settings
             NoEffectChance = Config.Bind("Flask",
                                          "NoEffectChance",
-                                         20,
+                                         10,
                                          "Probability of flasks to have of having no effect.");
 
             IntoxicationChance = Config.Bind("Flask",
@@ -70,7 +72,7 @@ namespace FlaskOfFortuneAndFolly
 
             HealingChance = Config.Bind("Flask",
                                         "HealingChance",
-                                        1,
+                                        3,
                                         "Probability of flasks to heal the LocalPlayer.");
 
             MaxHealing = Config.Bind("Flask",
@@ -80,12 +82,12 @@ namespace FlaskOfFortuneAndFolly
 
             InvertedControlsChance = Config.Bind("Flask",
                                                  "InvertedControlsChance",
-                                                 40,
+                                                 50,
                                                  "Probability of flasks to invert the controls of the LocalPlayer.");
 
             TeleportationChance = Config.Bind("Flask",
                                               "TeleportationChance",
-                                              10,
+                                              33,
                                               "Probability of flasks to teleport the LocalPlayer to a random location.");
 
             FatigueChance = Config.Bind("Flask",
@@ -95,7 +97,7 @@ namespace FlaskOfFortuneAndFolly
 
             CombustionChance = Config.Bind("Flask",
                                            "CombustionChance",
-                                           30,
+                                           33,
                                            "Probability of flasks to set the LocalPlayer on fire.");
 
             BlindnessChance = Config.Bind("Flask",
@@ -105,7 +107,7 @@ namespace FlaskOfFortuneAndFolly
 
             DysphasiaChance = Config.Bind("Flask",
                                           "DysphasiaChance",
-                                          40,
+                                          33,
                                           "Probability of flasks to cause funny voice cracks for the LocalPlayer.");
 
             PowerChance = Config.Bind("Flask",
@@ -115,17 +117,17 @@ namespace FlaskOfFortuneAndFolly
 
             NightVisionChance = Config.Bind("Flask",
                                             "NightVisionChance",
-                                            5,
+                                            3,
                                             "Probability of flasks to grant the LocalPlayer night vision.");
 
             ScatterChance = Config.Bind("Flask",
                                         "ScatterChance",
-                                        30,
+                                        50,
                                         "Probability of flasks to scatter the LocalPlayer's items.");
 
             EscapeChance = Config.Bind("Flask",
                                        "EscapeChance",
-                                       10,
+                                       1,
                                        "Probability of flasks to teleport the Player to the ship.");
             #endregion
 

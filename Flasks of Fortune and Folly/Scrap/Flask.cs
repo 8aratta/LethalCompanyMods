@@ -3,6 +3,8 @@ using GameNetcodeStuff;
 using FlaskOfFortuneAndFolly.Handlers;
 using System.Collections;
 using UnityEngine;
+using System.Security.Cryptography.X509Certificates;
+using System.Collections.Generic;
 #endregion
 
 namespace FlaskOfFortuneAndFolly.Scrap
@@ -108,53 +110,39 @@ namespace FlaskOfFortuneAndFolly.Scrap
             throw new System.NotImplementedException();
         }
 
+        private static int[] GetEffectProbabilitiesFromConfig()
+        {
+            int[] probabilities = new int[14]; // incr every time a new effect is added
+
+            // Assign effect probabilities based on configuration
+            // Todo check if the config can be null since set in the Awake method.. failsafe here might be obsolete 
+            probabilities[0] = FlaskOfFortuneAndFollyPlugin.NoEffectChance?.Value ?? 10;
+            probabilities[1] = FlaskOfFortuneAndFollyPlugin.IntoxicationChance?.Value ?? 50;
+            probabilities[2] = FlaskOfFortuneAndFollyPlugin.PoisoningChance?.Value ?? 50;
+            probabilities[3] = FlaskOfFortuneAndFollyPlugin.HealingChance?.Value ?? 2;
+            probabilities[4] = FlaskOfFortuneAndFollyPlugin.InvertedControlsChance?.Value ?? 50;
+            probabilities[5] = FlaskOfFortuneAndFollyPlugin.TeleportationChance?.Value ?? 10;
+            probabilities[6] = FlaskOfFortuneAndFollyPlugin.FatigueChance?.Value ?? 50;
+            probabilities[7] = FlaskOfFortuneAndFollyPlugin.CombustionChance?.Value ?? 10;
+            probabilities[8] = FlaskOfFortuneAndFollyPlugin.BlindnessChance?.Value ?? 50;
+            probabilities[9] = FlaskOfFortuneAndFollyPlugin.DysphasiaChance?.Value ?? 33;
+            probabilities[10] = FlaskOfFortuneAndFollyPlugin.PowerChance?.Value ?? 5;
+            probabilities[11] = FlaskOfFortuneAndFollyPlugin.NightVisionChance?.Value ?? 3;
+            probabilities[12] = FlaskOfFortuneAndFollyPlugin.ScatterChance?.Value ?? 50;
+            probabilities[13] = FlaskOfFortuneAndFollyPlugin.EscapeChance?.Value ?? 1;
+
+            return probabilities;
+        }
+
         private void RandomizeEffect()
         {
             int totalProbability = 0;
-            int[] probabilities = new int[14];
+            int[] probabilities = GetEffectProbabilitiesFromConfig();
 
-            // Assign probabilities based on configuration
-            probabilities[0] = FlaskOfFortuneAndFollyPlugin.NoEffectChance.Value;
-            totalProbability += probabilities[0];
-
-            probabilities[1] = FlaskOfFortuneAndFollyPlugin.IntoxicationChance.Value;
-            totalProbability += probabilities[1];
-
-            probabilities[2] = FlaskOfFortuneAndFollyPlugin.PoisoningChance.Value;
-            totalProbability += probabilities[2];
-
-            probabilities[3] = FlaskOfFortuneAndFollyPlugin.HealingChance.Value;
-            totalProbability += probabilities[3];
-
-            probabilities[4] = FlaskOfFortuneAndFollyPlugin.InvertedControlsChance.Value;
-            totalProbability += probabilities[4];
-
-            probabilities[5] = FlaskOfFortuneAndFollyPlugin.TeleportationChance.Value;
-            totalProbability += probabilities[5];
-
-            probabilities[6] = FlaskOfFortuneAndFollyPlugin.FatigueChance.Value;
-            totalProbability += probabilities[6];
-
-            probabilities[7] = FlaskOfFortuneAndFollyPlugin.CombustionChance.Value;
-            totalProbability += probabilities[7];
-
-            probabilities[8] = FlaskOfFortuneAndFollyPlugin.BlindnessChance.Value;
-            totalProbability += probabilities[8];
-
-            probabilities[9] = FlaskOfFortuneAndFollyPlugin.DysphasiaChance.Value;
-            totalProbability += probabilities[9];
-
-            probabilities[10] = FlaskOfFortuneAndFollyPlugin.PowerChance.Value;
-            totalProbability += probabilities[10];
-
-            probabilities[11] = FlaskOfFortuneAndFollyPlugin.NightVisionChance.Value;
-            totalProbability += probabilities[11];
-
-            probabilities[12] = FlaskOfFortuneAndFollyPlugin.ScatterChance.Value;
-            totalProbability += probabilities[12];
-
-            probabilities[13] = FlaskOfFortuneAndFollyPlugin.EscapeChance.Value;
-            totalProbability += probabilities[13];
+            for (int i = 0; i < probabilities.Length; i++)
+            {
+                totalProbability += probabilities[i];
+            }
 
             // If no effects are enabled, set NoEffect as default
             if (totalProbability == 0)
@@ -353,12 +341,65 @@ namespace FlaskOfFortuneAndFolly.Scrap
 
         private void ApplyTeleportationEffect(PlayerControllerB player)
         {
+
             if (ItemPropertiesDiscovered)
                 HUDManager.Instance.DisplayTip("Teleportation", "You have been teleported!");
             else
                 HUDManager.Instance.DisplayTip("Teleportation", "You feel disoriented...");
 
-            // Implement the effect logic here
+            // Find possible teleportation destinations
+            List<Vector3> possibleDestinations = new List<Vector3>();
+
+            // Differenciate between inside and outside teleportation
+            if (player.isInsideFactory)
+            {
+                FlowermanAI bracken = StartOfRound.FindAnyObjectByType<FlowermanAI>();
+                EnemyAI insideMonster = StartOfRound.FindObjectOfType<EnemyAI>();
+                GameObject secretRoom = GameObject.Find("SmallRoom2(Clone)");
+
+
+                if (secretRoom != null)
+                    possibleDestinations.Add(secretRoom.transform.position); // Adds Secrect Room as possible destination
+
+                if (bracken != null && bracken.movingTowardsTargetPlayer)
+                    possibleDestinations.Add(bracken.favoriteSpot.position); // Adds Bracken's favorite spot as possible destination
+
+                if (insideMonster != null && !insideMonster.isOutside)
+                    possibleDestinations.Add(insideMonster.ChooseClosestNodeToPosition(insideMonster.transform.position, true, 5).position); // Adds Inside Monster's closest node as possible destination
+
+                possibleDestinations.Add(RoundManager.FindMainEntrancePosition(true)); // Adds Main Entrance as possible destination
+
+            }
+            else
+            {
+                possibleDestinations.Add(RoundManager.FindMainEntrancePosition(true, true)); // Adds Main Entrance as possible destination
+                possibleDestinations.Add(RoundManager.FindAnyObjectByType<ItemDropship>().itemSpawnPositions[1].position); // Adds Dropship as possible destination
+                possibleDestinations.Add(RoundManager.Instance.shipSpawnPathPoints[0].position); // Adds Ship as possible destination
+            }
+
+            // Randomly select a teleport target
+            Vector3 selectedTarget = possibleDestinations[random.Next(possibleDestinations.Count)];
+            player.TeleportPlayer(selectedTarget);
+
+
+            player.SpawnPlayerAnimation();
+
+            // TODO:
+            // - Make teleport destination configurable
+            // - Add a teleportation sound
+            // - Add a teleportation visual effect
+            // - Add a teleportation to random location
+            // -------------------------------------------------
+            // TOTEST:
+            // - Teleportation to secret room
+            // - Teleportation to Bracken's favorite spot
+            // - Teleportation to Inside Monster's closest node
+            // - Teleportation to Main Entrance
+            // -------------------------------------------------
+            // TOFIX:
+            // - Backroom Teleportation spawns you inside of wall of the room
+            // - Teleportation inside makes the player not targetable 
+            // --> Differenciate between inside and outside teleportation
         }
 
         private void ApplyFatigueEffect(PlayerControllerB player)
@@ -428,17 +469,7 @@ namespace FlaskOfFortuneAndFolly.Scrap
             else
                 HUDManager.Instance.DisplayTip("Scatter", "You feel disoriented...");
 
-            // Implement the effect logic here
-        }
-
-        private void ApplyEscapeEffect(PlayerControllerB player)
-        {
-            if (ItemPropertiesDiscovered)
-                HUDManager.Instance.DisplayTip("Escape", "You feel the urge to run!");
-            else
-                HUDManager.Instance.DisplayTip("Escape", "You feel a sudden urge to flee...");
-
-            // Implement the effect logic here
+            player.DropAllHeldItemsAndSync();
         }
     }
 }
